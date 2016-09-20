@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-package xyz.hexene.localvpn;
+package hosts.file.localvpn;
 
 import android.util.Log;
 
@@ -28,8 +28,8 @@ import java.nio.channels.SocketChannel;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import xyz.hexene.localvpn.Packet.TCPHeader;
-import xyz.hexene.localvpn.TCB.TCBStatus;
+import hosts.file.localvpn.Packet.TCPHeader;
+import hosts.file.localvpn.TCB.TCBStatus;
 
 public class TCPOutput implements Runnable
 {

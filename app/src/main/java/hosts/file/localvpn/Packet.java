@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-package xyz.hexene.localvpn;
+package hosts.file.localvpn;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

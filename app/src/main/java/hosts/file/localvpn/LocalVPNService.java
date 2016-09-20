@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-package xyz.hexene.localvpn;
+package hosts.file.localvpn;
 
 import android.app.PendingIntent;
 import android.content.Intent;
@@ -41,11 +41,11 @@ public class LocalVPNService extends VpnService
     private static final String VPN_ADDRESS = "10.0.0.2"; // Only IPv4 support for now
     private static final String VPN_ROUTE = "0.0.0.0"; // Intercept everything
 
-    public static final String BROADCAST_VPN_STATE = "xyz.hexene.localvpn.VPN_STATE";
+    public static final String BROADCAST_VPN_STATE = "hosts.file.localvpn.VPN_STATE";
 
     private static boolean isRunning = false;
-
-    private ParcelFileDescriptor vpnInterface = null;
+    private static LocalVPNService localVPNService;
+    private static ParcelFileDescriptor vpnInterface;
 
     private PendingIntent pendingIntent;
 
@@ -61,6 +61,7 @@ public class LocalVPNService extends VpnService
     public void onCreate()
     {
         super.onCreate();
+        localVPNService = this;
         isRunning = true;
         setupVPN();
         try
@@ -101,6 +102,11 @@ public class LocalVPNService extends VpnService
         }
     }
 
+    public void stopVPN() {
+        cleanup();
+        this.stopSelf();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
@@ -112,23 +118,34 @@ public class LocalVPNService extends VpnService
         return isRunning;
     }
 
+    public static LocalVPNService getService() {
+        return localVPNService;
+    }
+
+    public static ParcelFileDescriptor getInterface() {
+        return vpnInterface;
+    }
+
     @Override
     public void onDestroy()
     {
         super.onDestroy();
-        isRunning = false;
-        executorService.shutdownNow();
         cleanup();
         Log.i(TAG, "Stopped");
     }
 
     private void cleanup()
     {
+        Log.d(TAG, "Cleanup called");
+
+        isRunning = false;
+        executorService.shutdownNow();
         deviceToNetworkTCPQueue = null;
         deviceToNetworkUDPQueue = null;
         networkToDeviceQueue = null;
         ByteBufferPool.clear();
         closeResources(udpSelector, tcpSelector, vpnInterface);
+        vpnInterface = null;
     }
 
     // TODO: Move this to a "utils" class for reuse
@@ -136,13 +153,15 @@ public class LocalVPNService extends VpnService
     {
         for (Closeable resource : resources)
         {
+            if (resource == null)
+                continue;
             try
             {
                 resource.close();
             }
             catch (IOException e)
             {
-                // Ignore
+                e.printStackTrace();
             }
         }
     }
@@ -247,6 +266,7 @@ public class LocalVPNService extends VpnService
             finally
             {
                 closeResources(vpnInput, vpnOutput);
+                vpnFileDescriptor = null;
             }
         }
     }
